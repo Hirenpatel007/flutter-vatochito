@@ -1,0 +1,146 @@
+import 'dart:async';
+import 'dart:convert';
+
+import 'package:equatable/equatable.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:vatochito_chat/src/features/chat/data/chat_repository.dart';
+import 'package:vatochito_chat/src/features/chat/data/models/message_model.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
+
+part 'chat_room_state.dart';
+
+class ChatRoomCubit extends Cubit<ChatRoomState> {
+  ChatRoomCubit(this._repository, this._getUserId)
+      : super(const ChatRoomState());
+
+  final ChatRepository _repository;
+  final Future<int?> Function() _getUserId;
+  StreamSubscription<dynamic>? _channelSubscription;
+  WebSocketChannel? _channel;
+
+  Future<void> connect(int conversationId) async {
+    emit(state.copyWith(status: ChatRoomStatus.loading));
+    try {
+      final messages = await _repository.fetchMessages(conversationId);
+      emit(state.copyWith(messages: messages));
+
+      _channel = await _repository.websocketService.connect(conversationId);
+      _channelSubscription = _channel!.stream.listen(
+        (data) {
+          final jsonData = jsonDecode(data as String) as Map<String, dynamic>;
+          if (jsonData['type'] == 'message.new') {
+            final messageData = jsonData['data'] as Map<String, dynamic>;
+            final message = MessageModel.fromJson(messageData);
+            emit(state.copyWith(messages: [message, ...state.messages]));
+          } else if (jsonData['type'] == 'message.edited') {
+            final messageData = jsonData['data'] as Map<String, dynamic>;
+            final updatedMessage = MessageModel.fromJson(messageData);
+            final updatedMessages = state.messages.map((m) {
+              return m.id == updatedMessage.id ? updatedMessage : m;
+            }).toList();
+            emit(state.copyWith(messages: updatedMessages));
+          } else if (jsonData['type'] == 'message.deleted') {
+            final messageId = jsonData['message_id'] as int;
+            final updatedMessages = state.messages.map((m) {
+              if (m.id == messageId) {
+                return m.copyWith(
+                    isDeleted: true, content: 'This message was deleted');
+              }
+              return m;
+            }).toList();
+            emit(state.copyWith(messages: updatedMessages));
+          }
+        },
+        onError: (error) {
+          emit(state.copyWith(
+            status: ChatRoomStatus.failure,
+            errorMessage: error.toString(),
+          ));
+        },
+        onDone: () {
+          emit(state.copyWith(status: ChatRoomStatus.success));
+        },
+      );
+      emit(state.copyWith(status: ChatRoomStatus.success));
+    } catch (e) {
+      emit(
+        state.copyWith(
+          status: ChatRoomStatus.failure,
+          errorMessage: e.toString(),
+        ),
+      );
+    }
+  }
+
+  Future<void> sendMessage(String content, int conversationId) async {
+    print('DEBUG: ChatRoomCubit.sendMessage called');
+    print('DEBUG: Content: "$content"');
+    print('DEBUG: ConversationId: $conversationId');
+    if (content.isEmpty) {
+      print('DEBUG: Content is empty, returning');
+      return;
+    }
+    try {
+      final userId = await _getUserId();
+      print('DEBUG: sendMessage - userId: $userId');
+      if (userId == null) {
+        print('DEBUG: userId is null, emitting error');
+        emit(state.copyWith(errorMessage: 'User not authenticated'));
+        return;
+      }
+      if (_channel == null) {
+        print('DEBUG: WebSocket channel is null, emitting error');
+        emit(state.copyWith(errorMessage: 'Not connected to chat'));
+        return;
+      }
+      final message = {
+        'type': 'message.send',
+        'content': content,
+        'conversation_id': conversationId,
+        'user_id': userId,
+      };
+      print('DEBUG: Sending WebSocket message: $message');
+      _channel?.sink.add(jsonEncode(message));
+      print('DEBUG: WebSocket message sent successfully');
+    } catch (e, stack) {
+      print('DEBUG: Error in sendMessage: $e');
+      print('DEBUG: Stack trace: $stack');
+      emit(state.copyWith(errorMessage: 'Failed to send message'));
+    }
+  }
+
+  Future<void> editMessage(
+      int messageId, String content, int conversationId) async {
+    try {
+      await _repository.editMessage(
+        conversationId: conversationId,
+        messageId: messageId,
+        content: content,
+      );
+    } catch (e) {
+      emit(state.copyWith(errorMessage: 'Failed to edit message'));
+    }
+  }
+
+  Future<void> deleteMessage(int messageId, int conversationId) async {
+    try {
+      await _repository.deleteMessage(
+        conversationId: conversationId,
+        messageId: messageId,
+      );
+    } catch (e) {
+      emit(state.copyWith(errorMessage: 'Failed to delete message'));
+    }
+  }
+
+  void clearError() {
+    emit(state.copyWith(clearError: true));
+  }
+
+  @override
+  Future<void> close() {
+    _channelSubscription?.cancel();
+    _channel?.sink.close();
+    return super.close();
+  }
+}
