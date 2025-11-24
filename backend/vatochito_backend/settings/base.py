@@ -83,7 +83,7 @@ WSGI_APPLICATION = "vatochito_backend.wsgi.application"
 ASGI_APPLICATION = "vatochito_backend.asgi.application"
 
 DATABASES = {
-    "default": env.db("DATABASE_URL"),
+    "default": env.db("DATABASE_URL", default="sqlite:///db.sqlite3"),
 }
 
 AUTH_PASSWORD_VALIDATORS = [

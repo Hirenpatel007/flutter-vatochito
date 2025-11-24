@@ -11,7 +11,7 @@ class AppEndpoints {
   static String get baseUrl {
     if (_isProduction) {
       // Production - Render backend URL
-      return 'https://vatochito-api.onrender.com';
+      return 'https://flutter-vatochito.onrender.com';
     }
     // Development - Local server
     if (kIsWeb) return 'http://localhost:8000';
@@ -24,7 +24,7 @@ class AppEndpoints {
   static String get wsBaseUrl {
     if (_isProduction) {
       // Production - Secure WebSocket
-      return 'wss://vatochito-api.onrender.com';
+      return 'wss://flutter-vatochito.onrender.com';
     }
     // Development - Local WebSocket
     if (kIsWeb) return 'ws://localhost:8000';
