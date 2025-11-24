@@ -1,5 +1,6 @@
 from .base import *  # noqa: F401,F403
 import os
+import dj_database_url
 from decouple import config, Csv
 
 # SECURITY
@@ -10,6 +11,15 @@ if allowed_hosts:
 else:
     # Fallback for deployment - allow Render domains
     ALLOWED_HOSTS = ['.onrender.com', 'vatochito-backend.onrender.com']
+
+# DATABASE
+DATABASES = {
+    'default': dj_database_url.config(
+        default=os.environ.get('DATABASE_URL'),
+        conn_max_age=600,
+        conn_health_checks=True,
+    )
+}
 
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 SECURE_SSL_REDIRECT = True
