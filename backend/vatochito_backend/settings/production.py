@@ -103,6 +103,11 @@ REST_FRAMEWORK['DEFAULT_THROTTLE_RATES'] = {  # noqa: F405
 }
 
 # LOGGING
+# Ensure logs directory exists
+LOGS_DIR = os.path.join(BASE_DIR, 'logs')  # noqa: F405
+if not os.path.exists(LOGS_DIR):
+    os.makedirs(LOGS_DIR)
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -113,31 +118,19 @@ LOGGING = {
         },
     },
     'handlers': {
-        'file': {
-            'level': 'INFO',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'filename': os.path.join(BASE_DIR, 'logs', 'django.log'),  # noqa: F405
-            'maxBytes': 1024 * 1024 * 15,
-            'backupCount': 10,
-            'formatter': 'verbose',
-        },
-        'error_file': {
-            'level': 'ERROR',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'filename': os.path.join(BASE_DIR, 'logs', 'errors.log'),  # noqa: F405
-            'maxBytes': 1024 * 1024 * 15,
-            'backupCount': 10,
+        'console': {
+            'class': 'logging.StreamHandler',
             'formatter': 'verbose',
         },
     },
     'loggers': {
         'django': {
-            'handlers': ['file', 'error_file'],
+            'handlers': ['console'],
             'level': 'INFO',
             'propagate': True,
         },
         'chat': {
-            'handlers': ['file', 'error_file'],
+            'handlers': ['console'],
             'level': 'INFO',
             'propagate': False,
         },
