@@ -8,6 +8,7 @@ import 'package:vatochito_chat/src/features/chat/data/models/message_model.dart'
 
 import 'package:vatochito_chat/src/features/chat/presentation/bloc/chat_room_cubit.dart';
 
+import '../../../../../../screens/call_page.dart';
 import '../widgets/message_bubble.dart';
 
 class ChatRoomPage extends StatefulWidget {
@@ -175,11 +176,42 @@ class _ChatRoomPageState extends State<ChatRoomPage>
   //   _toggleAttachmentMenu();
   // }
 
+  void _startCall(bool isVideoCall) {
+    if (widget.currentUser == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('User information missing')),
+      );
+      return;
+    }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CallPage(
+          callID: widget.conversationId.toString(),
+          userID: widget.currentUser!.id.toString(),
+          userName: widget.currentUser!.username,
+          isVideoCall: isVideoCall,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title ?? 'Chat'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.call),
+            onPressed: () => _startCall(false),
+          ),
+          IconButton(
+            icon: const Icon(Icons.videocam),
+            onPressed: () => _startCall(true),
+          ),
+        ],
       ),
       body: Column(
         children: [
