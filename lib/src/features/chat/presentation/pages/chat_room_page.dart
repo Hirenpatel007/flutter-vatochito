@@ -1,7 +1,10 @@
+import 'dart:developer' as developer;
+
 import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:vatochito_chat/src/features/auth/data/models/user_model.dart';
 import 'package:vatochito_chat/src/features/chat/data/models/message_model.dart';
 // import 'package:file_picker/file_picker.dart';  // Commented out temporarily
@@ -74,12 +77,14 @@ class _ChatRoomPageState extends State<ChatRoomPage>
   }
 
   void _sendMessage() {
-    print('DEBUG: _sendMessage called');
-    print('DEBUG: Message text: "${_messageController.text}"');
-    print('DEBUG: Conversation ID: ${widget.conversationId}');
+    developer.log('ChatRoomPage._sendMessage called', name: 'ChatRoomPage');
+    developer.log('Message text: "${_messageController.text}"',
+        name: 'ChatRoomPage');
+    developer.log('Conversation ID: ${widget.conversationId}',
+        name: 'ChatRoomPage');
     if (_messageController.text.isNotEmpty) {
       if (_editingMessageId != null) {
-        print('DEBUG: Editing message');
+        developer.log('Editing message', name: 'ChatRoomPage');
         context.read<ChatRoomCubit>().editMessage(
               _editingMessageId!,
               _messageController.text,
@@ -89,7 +94,7 @@ class _ChatRoomPageState extends State<ChatRoomPage>
           _editingMessageId = null;
         });
       } else {
-        print('DEBUG: Sending new message');
+        developer.log('Sending new message', name: 'ChatRoomPage');
         context
             .read<ChatRoomCubit>()
             .sendMessage(_messageController.text, widget.conversationId);
@@ -101,7 +106,7 @@ class _ChatRoomPageState extends State<ChatRoomPage>
         curve: Curves.easeOut,
       );
     } else {
-      print('DEBUG: Message is empty, not sending');
+      developer.log('Message is empty, not sending', name: 'ChatRoomPage');
     }
   }
 
@@ -176,12 +181,33 @@ class _ChatRoomPageState extends State<ChatRoomPage>
   //   _toggleAttachmentMenu();
   // }
 
-  void _startCall(bool isVideoCall) {
+  Future<void> _startCall(bool isVideoCall) async {
     if (widget.currentUser == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('User information missing')),
       );
       return;
+    }
+
+    // Request permissions before starting a call
+    if (isVideoCall) {
+      final cameraStatus = await Permission.camera.request();
+      final micStatus = await Permission.microphone.request();
+      if (!cameraStatus.isGranted || !micStatus.isGranted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('Camera and Microphone permissions are required')),
+        );
+        return;
+      }
+    } else {
+      final micStatus = await Permission.microphone.request();
+      if (!micStatus.isGranted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Microphone permission is required')),
+        );
+        return;
+      }
     }
 
     Navigator.push(
@@ -223,8 +249,10 @@ class _ChatRoomPageState extends State<ChatRoomPage>
                     SnackBar(content: Text(state.errorMessage!)),
                   );
                   // Clear error after showing
+                  final chatCubit = context.read<ChatRoomCubit>();
                   Future.delayed(const Duration(milliseconds: 100), () {
-                    context.read<ChatRoomCubit>().clearError();
+                    if (!mounted) return;
+                    chatCubit.clearError();
                   });
                 }
               },
@@ -289,7 +317,7 @@ class _ChatRoomPageState extends State<ChatRoomPage>
         color: Theme.of(context).cardColor,
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: Colors.grey.withAlpha((0.1 * 255).round()),
             spreadRadius: 1,
             blurRadius: 5,
           ),
@@ -391,7 +419,7 @@ class _ChatRoomPageState extends State<ChatRoomPage>
       ),
       child: Container(
         padding: const EdgeInsets.all(16),
-        color: Theme.of(context).cardColor.withOpacity(0.95),
+        color: Theme.of(context).cardColor.withAlpha((0.95 * 255).round()),
         child: GridView.count(
           crossAxisCount: 4,
           shrinkWrap: true,

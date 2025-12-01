@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer' as developer;
 
 import 'package:dio/dio.dart';
 import 'package:vatochito_chat/src/core/constants/app_endpoints.dart';
@@ -81,8 +82,8 @@ class AuthRepository {
 
       final response = await _client.get<dynamic>(AppEndpoints.profile);
       return UserModel.fromJson(response.data as Map<String, dynamic>);
-    } catch (e) {
-      print('Error fetching current user: $e');
+    } catch (e, stack) {
+      developer.log('Error fetching current user', error: e, stackTrace: stack);
       return null;
     }
   }
@@ -98,8 +99,8 @@ class AuthRepository {
         data: formData,
       );
       return UserModel.fromJson(response.data as Map<String, dynamic>);
-    } catch (e) {
-      print('Error uploading avatar: $e');
+    } catch (e, stack) {
+      developer.log('Error uploading avatar', error: e, stackTrace: stack);
       return null;
     }
   }
@@ -108,8 +109,8 @@ class AuthRepository {
     try {
       await _client.delete<dynamic>('${AppEndpoints.profile}avatar/');
       return true;
-    } catch (e) {
-      print('Error deleting avatar: $e');
+    } catch (e, stack) {
+      developer.log('Error deleting avatar', error: e, stackTrace: stack);
       return false;
     }
   }
@@ -118,12 +119,14 @@ class AuthRepository {
     try {
       final token = await tokenStorage.getAccessToken();
       if (token == null) {
-        print('DEBUG: getUserId - Token is null');
+        developer.log('DEBUG: getUserId - Token is null',
+            name: 'AuthRepository');
         return null;
       }
       final parts = token.split('.');
       if (parts.length != 3) {
-        print('DEBUG: getUserId - Invalid token format');
+        developer.log('DEBUG: getUserId - Invalid token format',
+            name: 'AuthRepository');
         return null;
       }
 
@@ -132,17 +135,18 @@ class AuthRepository {
       final payload = json.decode(payloadString) as Map<String, dynamic>;
 
       final userId = payload['user_id'];
-      print(
-          'DEBUG: getUserId - Parsed userId: $userId (${userId.runtimeType})');
+      developer.log(
+          'DEBUG: getUserId - Parsed userId: $userId (${userId.runtimeType})',
+          name: 'AuthRepository');
 
       if (userId is int) return userId;
       if (userId is String) return int.tryParse(userId);
 
-      print('DEBUG: getUserId - Could not parse userId');
+      developer.log('DEBUG: getUserId - Could not parse userId',
+          name: 'AuthRepository');
       return null;
     } catch (e, stack) {
-      print('DEBUG: getUserId - Error: $e');
-      print(stack);
+      developer.log('DEBUG: getUserId - Error', error: e, stackTrace: stack);
       return null;
     }
   }

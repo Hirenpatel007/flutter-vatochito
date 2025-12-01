@@ -18,16 +18,17 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Future<void> _pickAndUploadImage(ImageSource source) async {
     final picker = ImagePicker();
+    final repository = context.read<AuthRepository>();
+    final authBloc = context.read<AuthBloc>();
     final pickedFile = await picker.pickImage(source: source);
 
     if (pickedFile != null) {
       setState(() => _isUploading = true);
       try {
-        final repository = context.read<AuthRepository>();
         final updatedUser = await repository.uploadAvatar(pickedFile.path);
         if (updatedUser != null) {
           if (mounted) {
-            context.read<AuthBloc>().add(const AuthUserUpdated());
+            authBloc.add(const AuthUserUpdated());
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Profile picture updated')),
             );
@@ -49,12 +50,13 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Future<void> _deleteAvatar() async {
     setState(() => _isUploading = true);
+    final repository = context.read<AuthRepository>();
+    final authBloc = context.read<AuthBloc>();
     try {
-      final repository = context.read<AuthRepository>();
       final success = await repository.deleteAvatar();
       if (success) {
         if (mounted) {
-          context.read<AuthBloc>().add(const AuthUserUpdated());
+          authBloc.add(const AuthUserUpdated());
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Profile picture removed')),
           );

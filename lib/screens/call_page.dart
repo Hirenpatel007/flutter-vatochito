@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:zego_uikit_prebuilt_call/zego_uikit_prebuilt_call.dart';
 
-import '../src/core/constants/zego_config.dart';
-
 class CallPage extends StatelessWidget {
   const CallPage({
     super.key,
@@ -20,8 +18,9 @@ class CallPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ZegoUIKitPrebuiltCall(
-      appID: ZegoConfig.appId,
-      appSign: ZegoConfig.appSign,
+      appID: 1677621721,
+      appSign:
+          'd8d04632ec31b8b1821f304b4ae85d3e7ab612ea61788efbae75d2d64000c6b1',
       userID: userID,
       userName: userName,
       callID: callID,

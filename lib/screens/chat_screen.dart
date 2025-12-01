@@ -20,7 +20,8 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+    final args =
+        ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
     _conversationId = args['id'];
     _conversationName = args['name'];
     _initChat();
@@ -72,7 +73,9 @@ class _ChatScreenState extends State<ChatScreen> {
     // But ChatProvider uses HTTP. Let's stick to HTTP for sending and WS for receiving.
 
     try {
-      await chatProvider.sendMessage(authProvider.token!, _conversationId!, content);
+      await chatProvider.sendMessage(
+          authProvider.token!, _conversationId!, content);
+      if (!mounted) return;
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to send message: $e')),
@@ -85,7 +88,8 @@ class _ChatScreenState extends State<ChatScreen> {
     final chatProvider = Provider.of<ChatProvider>(context);
     final wsProvider = Provider.of<WebSocketProvider>(context);
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final currentUserId = authProvider.user?['id']; // Assuming user object has id
+    final currentUserId =
+        authProvider.user?['id']; // Assuming user object has id
 
     // Merge HTTP messages and WS messages if needed, or just rely on one source.
     // Ideally, WS updates the same list in ChatProvider or we listen to both.
@@ -129,12 +133,15 @@ class _ChatScreenState extends State<ChatScreen> {
                     itemBuilder: (context, index) {
                       final message = chatProvider.messages[index];
                       final isMe = message['sender'] == currentUserId ||
-                                   (message['sender'] is Map && message['sender']['id'] == currentUserId);
+                          (message['sender'] is Map &&
+                              message['sender']['id'] == currentUserId);
 
                       return Align(
-                        alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+                        alignment:
+                            isMe ? Alignment.centerRight : Alignment.centerLeft,
                         child: Container(
-                          margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                          margin: const EdgeInsets.symmetric(
+                              vertical: 4, horizontal: 8),
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
                             color: isMe ? Colors.blue : Colors.grey[300],
@@ -142,7 +149,8 @@ class _ChatScreenState extends State<ChatScreen> {
                           ),
                           child: Text(
                             message['content'] ?? '',
-                            style: TextStyle(color: isMe ? Colors.white : Colors.black),
+                            style: TextStyle(
+                                color: isMe ? Colors.white : Colors.black),
                           ),
                         ),
                       );

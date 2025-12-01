@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:developer' as developer;
 
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -73,23 +74,32 @@ class ChatRoomCubit extends Cubit<ChatRoomState> {
   }
 
   Future<void> sendMessage(String content, int conversationId) async {
-    print('DEBUG: ChatRoomCubit.sendMessage called');
-    print('DEBUG: Content: "$content"');
-    print('DEBUG: ConversationId: $conversationId');
+    developer.log('ChatRoomCubit.sendMessage called', name: 'ChatRoomCubit');
+    developer.log('Content: "$content"', name: 'ChatRoomCubit');
+    developer.log('ConversationId: $conversationId', name: 'ChatRoomCubit');
+    developer.log('ChatRoomCubit.sendMessage called', name: 'ChatRoomCubit');
+    developer.log('Content: "$content"', name: 'ChatRoomCubit');
+    developer.log('ConversationId: $conversationId', name: 'ChatRoomCubit');
     if (content.isEmpty) {
-      print('DEBUG: Content is empty, returning');
+      developer.log('Content is empty, returning', name: 'ChatRoomCubit');
+      developer.log('Content is empty, returning', name: 'ChatRoomCubit');
       return;
     }
     try {
       final userId = await _getUserId();
-      print('DEBUG: sendMessage - userId: $userId');
+      developer.log('sendMessage - userId: $userId', name: 'ChatRoomCubit');
+      developer.log('sendMessage - userId: $userId', name: 'ChatRoomCubit');
       if (userId == null) {
-        print('DEBUG: userId is null, emitting error');
+        developer.log('userId is null, emitting error', name: 'ChatRoomCubit');
+        developer.log('userId is null, emitting error', name: 'ChatRoomCubit');
         emit(state.copyWith(errorMessage: 'User not authenticated'));
         return;
       }
       if (_channel == null) {
-        print('DEBUG: WebSocket channel is null, emitting error');
+        developer.log('WebSocket channel is null, emitting error',
+            name: 'ChatRoomCubit');
+        developer.log('WebSocket channel is null, emitting error',
+            name: 'ChatRoomCubit');
         emit(state.copyWith(errorMessage: 'Not connected to chat'));
         return;
       }
@@ -99,12 +109,20 @@ class ChatRoomCubit extends Cubit<ChatRoomState> {
         'conversation_id': conversationId,
         'user_id': userId,
       };
-      print('DEBUG: Sending WebSocket message: $message');
+      developer.log('Sending WebSocket message: $message',
+          name: 'ChatRoomCubit');
+      developer.log('Sending WebSocket message: $message',
+          name: 'ChatRoomCubit');
       _channel?.sink.add(jsonEncode(message));
-      print('DEBUG: WebSocket message sent successfully');
+      developer.log('WebSocket message sent successfully',
+          name: 'ChatRoomCubit');
+      developer.log('WebSocket message sent successfully',
+          name: 'ChatRoomCubit');
     } catch (e, stack) {
-      print('DEBUG: Error in sendMessage: $e');
-      print('DEBUG: Stack trace: $stack');
+      developer.log('Error in sendMessage',
+          error: e, stackTrace: stack, name: 'ChatRoomCubit');
+      developer.log('Error in sendMessage',
+          error: e, stackTrace: stack, name: 'ChatRoomCubit');
       emit(state.copyWith(errorMessage: 'Failed to send message'));
     }
   }
